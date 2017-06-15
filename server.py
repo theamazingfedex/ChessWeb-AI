@@ -2,7 +2,7 @@ import http.server
 import socketserver
 import os
 
-PORT = 8080
+PORT = os.environ.get('PORT') or 8080
 
 web_dir = os.path.join(os.path.dirname(__file__), 'JSChess')
 os.chdir(web_dir)
