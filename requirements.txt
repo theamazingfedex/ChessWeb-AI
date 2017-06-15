@@ -1,3 +1,4 @@
+python==3.5.3
 tflearn==0.3.1
 python-chess==0.18.2
 numpy==1.13.0
