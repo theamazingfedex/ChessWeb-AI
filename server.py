@@ -1,8 +1,14 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import http.server
+import socketserver
+import os
 
-def run(server_class=HTTPServer, handler_class=BaseHTTPRequestHandler):
-    server_address = ('', 8080)
-    httpd = server_class(server_address, handler_class)
-    httpd.serve_forever()
+PORT = 8080
 
-run()
+web_dir = os.path.join(os.path.dirname(__file__), 'JSChess')
+os.chdir(web_dir)
+
+Handler = http.server.SimpleHTTPRequestHandler
+httpd = socketserver.TCPServer(("", PORT), Handler)
+print("serving at port", PORT)
+
+httpd.serve_forever()#; except KeyboardInterrupt: pass; httpd.server_close()
