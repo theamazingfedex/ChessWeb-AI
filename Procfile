@@ -1,1 +1,1 @@
-web: cd JSChess\ && python -m http.server $PORT
+web: cd ./JSChess && python -m http.server $PORT
