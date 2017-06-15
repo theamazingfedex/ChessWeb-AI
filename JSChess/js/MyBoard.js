@@ -3,6 +3,21 @@
 //   position: 'start',
 
 // }
+const updateBoardUrl = 'localhost:8080/update'
+
+function callAjax(url, callback){
+    var xmlhttp;
+    // compatible with IE7+, Firefox, Chrome, Opera, Safari
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function(){
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+            callback(xmlhttp.responseText);
+        }
+    }
+    xmlhttp.open("GET", url, true);
+    xmlhttp.send();
+}
+
 var board,
   game = new Chess(),
   statusEl = $('#status'),
@@ -84,6 +99,8 @@ var updateStatus = function() {
   statusEl.html(status);
   fenEl.html(game.fen());
   pgnEl.html(game.pgn());
+
+  callAjax(updateBoardUrl + game.fen(), result => alert(result));
 };
 
 var cfg = {
