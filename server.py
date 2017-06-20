@@ -1,91 +1,92 @@
-# import http.server
-# import socketserver
-# import os
+#!/usr/bin/python3
 
-# PORT = os.environ.get('PORT') or 8080
+from flask import Flask, request, redirect, url_for, send_from_directory, session
+from flask_cors import CORS, cross_origin
+from waitress import serve
+import chess
+import chess.uci
+import json
+import time
+import os
+import serverutils as utils
 
-# web_dir = os.path.join(os.path.dirname(__file__), 'JSChess')
-# os.chdir(web_dir)
+HOST_NAME = 'localhost'
+PORT_NUMBER = os.environ.get('PORT') or 8080
 
-# Handler = http.server.SimpleHTTPRequestHandler
-# httpd = socketserver.TCPServer(("", PORT), Handler)
-# print("serving at port", PORT)
+app = Flask(__name__)
+cors = CORS(app)
+app.debug = True
+app.config['SECRET_KEY'] = os.urandom(24)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
-# httpd.serve_forever()#; except KeyboardInterrupt: pass; httpd.server_close()
+board = chess.Board()
+engine = chess.uci.popen_engine("./stockfish_8_x64.exe")
+engine.uci()
 
-def app(environ, start_response):
-  data = b"Hello, World!\n"
-  start_response("200 OK", [
-    ("Content-Type", "text/plain"),
-    ("Content-Length", str(len(data)))
-  ])
-  return iter([data])
+@app.route('/')
+def root():
+  return send_from_directory('./JSChess', 'index.html')
+
+@app.route('/<path:path>')
+def static_proxy(path):
+  return send_from_directory('./JSChess', path)
+
+@app.route('/move/uci/<source>/<target>')
+def move_uci(source, target):
+  move = chess.Move.from_uci(str(source + target))
+  board.push(move)
+  return board.fen()
+
+@app.route('/move/san/<destination>')
+def move_san(destination):
+  board.push_san(destination)
+  return board.fen()
+
+@app.route('/move/san/get/')
+@app.route('/move/san/get/<fen>')
+def get_san_move(fen):
+  fen = utils.decode_fen(fen)
+  engine.position(chess.Board(fen))
+  command = engine.go(movetime=1000)
+  print('sending move:: ', command[0])
+  ret = json.dumps(command[0])
+  print('sending return value: ', ret)
+  return ret
+
+@app.route('/decode/<fen>')
+def decodefen(fen):
+  print(fen)
+  return utils.decode_fen(fen)
+
+@app.route('/newgame/')
+@app.route('/newgame/<fenstr>')
+def new_game(fenstr=""):
+  if (fenstr != ""):
+    fen = utils.decode_fen(fenstr)
+    try:
+      board = chess.Board(fen=fen)
+    except Exception:
+      return "Invalid FEN string"
+  else:
+    board = chess.Board()
+
+  session['fen_str'] = board.fen()
+  return board.fen()
 
 
-def server_app(environ, start_response):
-    method = environ.get('REQUEST_METHOD', 'GET')
-    if method == 'GET':
-        return get_response(start_response)
-    elif method == 'POST':
-        accept_header = environ.get('HTTP_ACCEPT', '*/*')
-        post_data = environ.get('wsgi.input').read()
-        return post_response(start_response, accept_header, post_data)
 
-def get_response(start_response):
-    data = "Only POST method is allowed. See http://webmention.org/"
-    start_response("405", [
-        ("Content-Type", "text/plain"),
-        ("Content-Length", str(len(data)))
-    ])
-    return iter([data])
-
-def post_response(start_response, accept_header, post_data):
-    print accept_header
-    if accept_header in ('application/json', '*/*'):
-        return json_response(start_response, post_data)
-    elif accept_header in ('text/html',):
-        return html_response(start_response, post_data)
-    else:
-        data = ("Wrong Accept header. We can provide only text/html or"
-                " application/json. See http://webmention.org/\n"
-                "Accept header is %s" % accept_header)
-        start_response("406", [
-            ("Content-Type", "text/plain"),
-            ("Content-Length", str(len(data)))
-        ])
-        return iter([data])
-
-def html_response(start_response, post_data):
-  data = """<!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="utf-8">
-
-      <title>ChessWeb-AI</title>
-      <meta name="description" content="ChessWeb-AI">
-      <meta name="author" content="theamazingfedex">
-
-      <link rel="stylesheet" href="css/chessboard-0.3.0.css?v=1.0">
-    </head>
-
-    <body>
-      <div id="board" style="width: 400px"></div>
-      <p>Status: <span id="status"></span></p>
-      <p>FEN: <span id="fen"></span></p>
-      <p>PGN: <span id="pgn"></span></p>
-      <script
-      src="https://code.jquery.com/jquery-3.2.1.min.js"
-      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-      crossorigin="anonymous"></script>
-      <script src="js/chessboard-0.3.0.js"></script>
-      <!--<script src="js/domready.js"></script>-->
-      <script src="js/chess.js"></script>
-      <script src="js/MyBoard.js"></script>
-      <h3>footer</h3>
-    </body>
-    </html>"""
-  start_response("202", [
-      ("Content-Type", "text/html"),
-      ("Content-Length", str(len(data)))
-  ])
-  return iter([data])
+if __name__ == '__main__':
+    # wsgi_app = static.Cling('./JSChess')
+    print(time.asctime(), 'Server Starts - %s:%s' % (HOST_NAME, PORT_NUMBER))
+    # try:
+    serve(
+      app,
+      host=HOST_NAME,
+      port=PORT_NUMBER
+      # listen="*:"+str(PORT_NUMBER)
+    )
+        # httpd.serve_forever()
+    # except KeyboardInterrupt:
+    #     pass
+    # httpd.server_close()
+    # print(time.asctime(), 'Server Stops - %s:%s' % (HOST_NAME, PORT_NUMBER))

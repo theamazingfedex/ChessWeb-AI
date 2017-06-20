@@ -1,28 +1,36 @@
-// cfg = {
-//   draggable: true,
-//   position: 'start',
-
-// }
-const updateBoardUrl = 'localhost:8080/update'
+const updateBoardUrl = 'http://localhost:8080/update/'
+const baseUrl = window.location.href // <- ends with '/'
+const URLS = {
+  home: `${baseUrl}`,
+  newGame: `${baseUrl}newgame/`,
+  moveSan: `${baseUrl}move/san/`,
+  moveUci: `${baseUrl}move/uci/`,
+  getSanMove: `${baseUrl}move/san/get/`
+}
 
 function callAjax(url, callback){
-    var xmlhttp;
-    // compatible with IE7+, Firefox, Chrome, Opera, Safari
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function(){
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
-            callback(xmlhttp.responseText);
-        }
-    }
-    xmlhttp.open("GET", url, true);
-    xmlhttp.send();
+    $.ajax({
+      url: url,
+      crossDomain: true,
+      success: callback
+    })
+    // var xmlhttp;
+    // // compatible with IE7+, Firefox, Chrome, Opera, Safari
+    // xmlhttp = new XMLHttpRequest();
+    // xmlhttp.onreadystatechange = function(){
+    //     if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+    //         callback(xmlhttp.responseText);
+    //     }
+    // }
+    // xmlhttp.open("GET", url, true);
+    // xmlhttp.send();
 }
 
 var board,
   game = new Chess(),
-  statusEl = $('#status'),
-  fenEl = $('#fen'),
-  pgnEl = $('#pgn');
+  statusElement = $('#status'),
+  fenElement = $('#fen'),
+  pgnElement = $('#pgn');
 
 // do not pick up pieces if the game is over
 // only pick up pieces for the side to move
@@ -34,6 +42,30 @@ var onDragStart = function(source, piece, position, orientation) {
   }
 };
 
+var updateServer = function(source, target) {
+  callAjax(`${URLS.moveUci}${source}/${target}`, (res) => {
+    if (res) {
+      // alert('server update response: \n' + res);
+      getMoveFromServer();
+    }
+  });
+}
+
+var getMoveFromServer = function() {
+  callAjax(`${URLS.getSanMove}${encodeFen(game.fen())}`, (res) => {
+    res = JSON.parse(res);
+    move = numbersToCoords(res['from_square'], res['to_square'])
+    console.log('move: ', move);
+    // alert('move: ' + move)
+    game.move({
+      from: move[0],
+      to: move[1],
+      promotion: 'q'
+    });
+    board.position(game.fen());
+    updateStatus();
+  });
+}
 var makeRandomMove = function() {
   var possibleMoves = game.moves();
 
@@ -41,7 +73,8 @@ var makeRandomMove = function() {
   if (possibleMoves.length === 0) return;
 
   var randomIndex = Math.floor(Math.random() * possibleMoves.length);
-  game.move(possibleMoves[randomIndex]);
+  move = possibleMoves[randomIndex]
+  game.move(move);
   board.position(game.fen());
   updateStatus();
 };
@@ -58,7 +91,8 @@ var onDrop = function(source, target) {
   if (move === null) return 'snapback';
 
   updateStatus();
-  window.setTimeout(makeRandomMove, 250);
+  updateServer(source, target);
+  // window.setTimeout(makeRandomMove, 250);
   // updateStatus();
 };
 
@@ -96,12 +130,25 @@ var updateStatus = function() {
     }
   }
 
-  statusEl.html(status);
-  fenEl.html(game.fen());
-  pgnEl.html(game.pgn());
-
-  callAjax(updateBoardUrl + game.fen(), result => alert(result));
+  statusElement.html(status);
+  fenElement.html(game.fen());
+  pgnElement.html(game.pgn());
 };
+
+function encodeFen(fen){
+  // return encodeURI(fen);
+  return encodeURI(fen).replace(/\//g, 'Þ');
+}
+
+const coordsMap = ['a','b','c','d','e','f','g','h'];
+function numbersToCoords(from, to) {
+  var fromLetter = from % 8;
+  var fromNum = Math.ceil(from / 8);
+  var toLetter = to % 8;
+  var toNum = Math.ceil(to / 8);
+
+  return [coordsMap[fromLetter] + fromNum, coordsMap[toLetter] + toNum]
+}
 
 var cfg = {
   draggable: true,
