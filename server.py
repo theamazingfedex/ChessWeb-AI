@@ -20,10 +20,10 @@ app.config['SECRET_KEY'] = os.urandom(24)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 board = chess.Board()
-if sys.platform == 'win32':
-  engine = chess.uci.popen_engine("./stockfish_8_x64.exe")
-else:
-  engine = chess.uci.popen_engine("stockfish")
+# if sys.platform == 'win32':
+#   engine = chess.uci.popen_engine("./stockfish_8_x64.exe")
+# else:
+engine = chess.uci.popen_engine("stockfish")
 
 engine.uci()
 
