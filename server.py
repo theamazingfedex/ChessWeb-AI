@@ -49,14 +49,9 @@ def get_san_move(fen):
   engine.position(chess.Board(fen))
   command = engine.go(movetime=1000)
   print('sending move:: ', command[0])
-  ret = json.dumps(command[0])
+  ret = json.dumps(command[0].__dict__)
   print('sending return value: ', ret)
   return ret
-
-@app.route('/decode/<fen>')
-def decodefen(fen):
-  print(fen)
-  return utils.decode_fen(fen)
 
 @app.route('/newgame/')
 @app.route('/newgame/<fenstr>')

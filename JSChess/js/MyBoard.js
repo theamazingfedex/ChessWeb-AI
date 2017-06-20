@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", () => {
+
 const updateBoardUrl = 'http://localhost:8080/update/'
 const baseUrl = window.location.href // <- ends with '/'
 const URLS = {
@@ -7,6 +9,27 @@ const URLS = {
   moveUci: `${baseUrl}move/uci/`,
   getSanMove: `${baseUrl}move/san/get/`
 }
+const defaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+// var $select =
+var data = [['random', 'Random Moves'], ['stockfish', 'Stockfish Engine']]
+var SELECTED_DIFFICULTY = "stockfish";
+var $selector = $("#difficultySelector");
+for(var [val, text] in data) {
+    $("<option />", {value: data[val][0], text: data[val][1]}).appendTo($selector);
+}
+$selector.val(SELECTED_DIFFICULTY);
+$selector.on('change', (e) => {
+  if (game.fen() != defaultFEN) {
+    $selector.prop('disabled', true)
+    return;
+  }
+  SELECTED_DIFFICULTY = e.target.value;
+  $selector.val(SELECTED_DIFFICULTY);
+});
+
+var $resetButton = $('#resetButton').on('click', (e) => {
+  resetBoard();
+});
 
 function callAjax(url, callback){
     $.ajax({
@@ -14,16 +37,6 @@ function callAjax(url, callback){
       crossDomain: true,
       success: callback
     })
-    // var xmlhttp;
-    // // compatible with IE7+, Firefox, Chrome, Opera, Safari
-    // xmlhttp = new XMLHttpRequest();
-    // xmlhttp.onreadystatechange = function(){
-    //     if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
-    //         callback(xmlhttp.responseText);
-    //     }
-    // }
-    // xmlhttp.open("GET", url, true);
-    // xmlhttp.send();
 }
 
 var board,
@@ -45,10 +58,22 @@ var onDragStart = function(source, piece, position, orientation) {
 var updateServer = function(source, target) {
   callAjax(`${URLS.moveUci}${source}/${target}`, (res) => {
     if (res) {
-      // alert('server update response: \n' + res);
-      getMoveFromServer();
+      // Update the server board with random moves also?
+      if (SELECTED_DIFFICULTY === 'random'){
+        makeRandomMove();
+      }
+      else {
+        getMoveFromServer();
+      }
     }
   });
+}
+
+var resetBoard = function() {
+  game.reset();
+  board.position(defaultFEN);
+  $selector.prop('disabled', false);
+  updateStatus();
 }
 
 var getMoveFromServer = function() {
@@ -75,7 +100,7 @@ var makeRandomMove = function() {
   var randomIndex = Math.floor(Math.random() * possibleMoves.length);
   move = possibleMoves[randomIndex]
   game.move(move);
-  board.position(game.fen());
+  //board.position(game.fen());
   updateStatus();
 };
 
@@ -90,8 +115,11 @@ var onDrop = function(source, target) {
   // illegal move
   if (move === null) return 'snapback';
 
+  $selector.prop('disabled', true);
   updateStatus();
+
   updateServer(source, target);
+
   // window.setTimeout(makeRandomMove, 250);
   // updateStatus();
 };
@@ -161,3 +189,5 @@ board = ChessBoard('board', cfg);
 
 updateStatus();
 // ChessBoard('board', 'start')
+
+});
