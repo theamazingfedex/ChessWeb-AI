@@ -3,15 +3,12 @@
 from flask import Flask, request, redirect, url_for, send_from_directory, session
 from flask_cors import CORS, cross_origin
 from waitress import serve
-import chess
-import chess.uci
-import json
-import time
-import os
 import serverutils as utils
+import os, sys, time, json, chess, chess.uci
 
 HOST_NAME = 'localhost'
 PORT_NUMBER = os.environ.get('PORT') or 8080
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -20,7 +17,10 @@ app.config['SECRET_KEY'] = os.urandom(24)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 board = chess.Board()
-engine = chess.uci.popen_engine("./stockfish_8_x64")
+if sys.platform == 'win32':
+  engine = chess.uci.popen_engine(DIR_PATH + "/stockfish_8_x64.exe")
+else:
+  engine = chess.uci.popen_engine(DIR_PATH + "/stockfish_8_x64")
 
 engine.uci()
 
