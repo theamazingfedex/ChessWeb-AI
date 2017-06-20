@@ -8,3 +8,4 @@ python-chess==0.18.2
 six==1.10.0
 waitress==1.0.2
 Werkzeug==0.12.2
+-e .  
