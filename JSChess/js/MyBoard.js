@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-const updateBoardUrl = 'http://localhost:8080/update/'
 const baseUrl = window.location.href // <- ends with '/'
 const URLS = {
   home: `${baseUrl}`,
