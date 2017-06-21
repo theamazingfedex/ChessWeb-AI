@@ -4,9 +4,9 @@ from flask import Flask, request, redirect, url_for, send_from_directory, sessio
 from flask_cors import CORS, cross_origin
 from waitress import serve
 import serverutils as utils
-import os, sys, time, json, chess, chess.uci
+import os, sys, time, stat, json, chess, chess.uci
 
-HOST_NAME = 'localhost'
+HOST_NAME = '0.0.0.0'
 PORT_NUMBER = os.environ.get('PORT') or 8080
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -20,6 +20,8 @@ board = chess.Board()
 if sys.platform == 'win32':
   engine = chess.uci.popen_engine(DIR_PATH + "/stockfish_8_x64.exe")
 else:
+  st = os.stat(DIR_PATH + "/stockfish_8_x64")
+  os.chmod(DIR_PATH + "/stockfish_8_x64", st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
   engine = chess.uci.popen_engine(DIR_PATH + "/stockfish_8_x64")
 
 engine.uci()
