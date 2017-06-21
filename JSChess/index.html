@@ -7,8 +7,12 @@
   <title>ChessWeb-AI</title>
   <meta name="description" content="ChessWeb-AI">
   <meta name="author" content="theamazingfedex">
-
+  <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="css/chessboard-0.3.0.css?v=1.0">
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -16,14 +20,14 @@
   <p>Status: <span id="status"></span></p>
   <p>FEN: <span id="fen"></span></p>
   <p>PGN: <span id="pgn"></span></p>
-  <script
-  src="https://code.jquery.com/jquery-3.2.1.min.js"
-  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
   <script src="js/chessboard-0.3.0.js"></script>
   <!--<script src="js/domready.js"></script>-->
   <script src="js/chess.js"></script>
   <script src="js/MyBoard.js"></script>
-  <h3>footer</h3>
+  <button id="resetButton">Reset</button>
+  <div class="difficultyContainer">
+    <p>Opponent Difficulty:</p>
+    <select id="difficultySelector" name="difficulty"/>
+  </div>
 </body>
 </html>
