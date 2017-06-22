@@ -20,7 +20,7 @@ function callAjax(url, callback){
 document.addEventListener("DOMContentLoaded", () => {
 
 // var $select =
-var data = [['random', 'Random Moves'], ['stockfish', 'Stockfish Engine']]
+var data = [['random', 'Random Moves'], ['stockfish', 'Stockfish Engine'], ['local', 'Local Opponent']]
 var SELECTED_DIFFICULTY = "stockfish";
 var $selector = $("#difficultySelector");
 var $submitBug = $("#submitBugButton");
@@ -61,6 +61,8 @@ var updateServer = function(source, target) {
       // Update the server board with random moves also?
       if (SELECTED_DIFFICULTY === 'random'){
         makeRandomMove();
+      } else if (SELECTED_DIFFICULTY === 'local'){
+        return;
       }
       else {
         getMoveFromServer();
