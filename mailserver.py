@@ -27,5 +27,5 @@ def send_email(message, subject="Bug Report"):
 
     mailserver.quit()
   except(Exception):
-    return '1'
+    return 'mailserver failed to submit bug report.'
   return '0'

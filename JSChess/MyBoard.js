@@ -143,10 +143,12 @@ function submitBugReport(e) {
   pgn = encodeURI(game.pgn());
   url = URLS.submitBug + pgn;
   // alert('pinging: ' + url);
+  $submitBug.prop('disabled', true)
   callAjax(url, (res) => {
-    if (res === 0) {
-      $submitBug.prop('disabled', true)
+    if (res == 0) {
+      console.log('ChessWeb bug submitted successfully.');
     } else {
+      console.log(res);
       $submitBug.prop('disabled', false)
     }
   });
