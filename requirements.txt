@@ -5,6 +5,7 @@ itsdangerous==0.24
 Jinja2==2.9.6
 MarkupSafe==1.0
 python-chess==0.18.2
+python-dotenv==0.6.4
 six==1.10.0
 waitress==1.0.2
 Werkzeug==0.12.2

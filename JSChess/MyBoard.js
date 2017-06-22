@@ -1,18 +1,30 @@
-document.addEventListener("DOMContentLoaded", () => {
-
 const baseUrl = window.location.href // <- ends with '/'
 const URLS = {
   home: `${baseUrl}`,
   newGame: `${baseUrl}newgame/`,
   moveSan: `${baseUrl}move/san/`,
   moveUci: `${baseUrl}move/uci/`,
-  getSanMove: `${baseUrl}move/san/get/`
+  getSanMove: `${baseUrl}move/san/get/`,
+  submitBug: `${baseUrl}mail/`
 }
 const defaultFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+function callAjax(url, callback){
+    $.ajax({
+      url: url,
+      crossDomain: true,
+      success: callback
+    })
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
 // var $select =
 var data = [['random', 'Random Moves'], ['stockfish', 'Stockfish Engine']]
 var SELECTED_DIFFICULTY = "stockfish";
 var $selector = $("#difficultySelector");
+var $submitBug = $("#submitBugButton");
+
 for(var [val, text] in data) {
     $("<option />", {value: data[val][0], text: data[val][1]}).appendTo($selector);
 }
@@ -26,23 +38,12 @@ $selector.on('change', (e) => {
   $selector.val(SELECTED_DIFFICULTY);
 });
 
+$submitBug.on('click', submitBugReport);
+
 var $resetButton = $('#resetButton').on('click', (e) => {
   resetBoard();
 });
 
-function callAjax(url, callback){
-    $.ajax({
-      url: url,
-      crossDomain: true,
-      success: callback
-    })
-}
-
-var board,
-  game = new Chess(),
-  statusElement = $('#status'),
-  fenElement = $('#fen'),
-  pgnElement = $('#pgn');
 
 // do not pick up pieces if the game is over
 // only pick up pieces for the side to move
@@ -75,20 +76,9 @@ var resetBoard = function() {
   updateStatus();
 }
 
+
 var getMoveFromServer = function() {
-  callAjax(`${URLS.getSanMove}${encodeFen(game.fen())}`, (res) => {
-    res = JSON.parse(res);
-    move = numbersToCoords(res['from_square'], res['to_square'])
-    console.log('move: ', move);
-    // alert('move: ' + move)
-    game.move({
-      from: move[0],
-      to: move[1],
-      promotion: 'q'
-    });
-    board.position(game.fen());
-    updateStatus();
-  });
+  callAjax(`${URLS.getSanMove}${encodeFen(game.fen())}`, getMoveFromServerCallback);
 }
 var makeRandomMove = function() {
   var possibleMoves = game.moves();
@@ -115,6 +105,7 @@ var onDrop = function(source, target) {
   if (move === null) return 'snapback';
 
   $selector.prop('disabled', true);
+  $submitBug.prop('disabled', false);
   updateStatus();
 
   updateServer(source, target);
@@ -128,6 +119,69 @@ var onDrop = function(source, target) {
 var onSnapEnd = function() {
   board.position(game.fen());
 };
+
+
+function encodeFen(fen){
+  // return encodeURI(fen);
+  return encodeURI(fen).replace(/\//g, 'Þ');
+}
+
+
+var cfg = {
+  draggable: true,
+  position: 'start',
+  onDragStart: onDragStart,
+  onDrop: onDrop,
+  onSnapEnd: onSnapEnd
+};
+board = ChessBoard('board', cfg);
+
+updateStatus();
+// ChessBoard('board', 'start')
+
+function submitBugReport(e) {
+  pgn = encodeURI(game.pgn());
+  url = URLS.submitBug + pgn;
+  // alert('pinging: ' + url);
+  callAjax(url, (res) => {
+    if (res === 0) {
+      $submitBug.prop('disabled', true)
+    } else {
+      $submitBug.prop('disabled', false)
+    }
+  });
+}
+
+});
+
+var board,
+  game = new Chess(),
+  statusElement = $('#status'),
+  fenElement = $('#fen'),
+  pgnElement = $('#pgn');
+const coordsMap = ['a','b','c','d','e','f','g','h'];
+function numbersToCoords(from, to) {
+  var fromLetter = from % 8;
+  var fromNum = Math.ceil(from / 8);
+  var toLetter = to % 8;
+  var toNum = Math.ceil(to / 8);
+
+  return [coordsMap[fromLetter] + fromNum, coordsMap[toLetter] + toNum, [from, to]]
+}
+var getMoveFromServerCallback = function(res) {
+    res = JSON.parse(res);
+    move = numbersToCoords(res['from_square'], res['to_square'])
+    console.log('move: ', move);
+    // alert('move: ' + move)
+    console.log('moving: ', move)
+    game.move({
+      from: move[0],
+      to: move[1],
+      promotion: 'q'
+    });
+    board.position(game.fen());
+    updateStatus();
+}
 
 var updateStatus = function() {
   var status = '';
@@ -162,31 +216,3 @@ var updateStatus = function() {
   pgnElement.html(game.pgn());
 };
 
-function encodeFen(fen){
-  // return encodeURI(fen);
-  return encodeURI(fen).replace(/\//g, 'Þ');
-}
-
-const coordsMap = ['a','b','c','d','e','f','g','h'];
-function numbersToCoords(from, to) {
-  var fromLetter = from % 8;
-  var fromNum = Math.ceil(from / 8);
-  var toLetter = to % 8;
-  var toNum = Math.ceil(to / 8);
-
-  return [coordsMap[fromLetter] + fromNum, coordsMap[toLetter] + toNum]
-}
-
-var cfg = {
-  draggable: true,
-  position: 'start',
-  onDragStart: onDragStart,
-  onDrop: onDrop,
-  onSnapEnd: onSnapEnd
-};
-board = ChessBoard('board', cfg);
-
-updateStatus();
-// ChessBoard('board', 'start')
-
-});

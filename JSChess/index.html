@@ -12,7 +12,7 @@
   <script
   src="https://code.jquery.com/jquery-3.2.1.min.js"
   integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-  crossorigin="anonymous"></script>
+  crossorigin="*"></script>
 </head>
 
 <body>
@@ -22,6 +22,7 @@
   <p>FEN: <span id="fen"></span></p>
   <p>PGN: <span id="pgn"></span></p>
   <button id="resetButton">Reset</button>
+  <button id="submitBugButton" disabled>Submit Bug</button>
   <div class="difficultyContainer">
     <p>Opponent Difficulty:</p>
     <select id="difficultySelector" name="difficulty"/>

@@ -6,3 +6,5 @@ def decode_fen(fen):
 
   # newfen = re.sub(r"\%20", " ", newfen)
   return newfen
+
+

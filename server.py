@@ -4,7 +4,7 @@ from flask import Flask, request, redirect, url_for, send_from_directory, sessio
 from flask_cors import CORS, cross_origin
 from waitress import serve
 import serverutils as utils
-import os, sys, time, stat, json, chess, chess.uci
+import os, sys, time, stat, json, chess, chess.uci, settings, mailserver
 
 HOST_NAME = '0.0.0.0'
 PORT_NUMBER = os.environ.get('PORT') or 8080
@@ -34,6 +34,10 @@ def root():
 def static_proxy(path):
   return send_from_directory('./JSChess', path)
 
+@app.route('/mail/<pgn>')
+def send_mail(pgn):
+  return mailserver.send_email(pgn)
+
 @app.route('/move/uci/<source>/<target>')
 def move_uci(source, target):
   move = chess.Move.from_uci(str(source + target))
@@ -51,9 +55,9 @@ def get_san_move(fen):
   fen = utils.decode_fen(fen)
   engine.position(chess.Board(fen))
   command = engine.go(movetime=1000)
-  print('sending move:: ', command[0])
+  # print('sending move:: ', command[0])
   ret = json.dumps(command[0].__dict__)
-  print('sending return value: ', ret)
+  # print('sending return value: ', ret)
   return ret
 
 @app.route('/newgame/')
