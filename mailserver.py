@@ -1,4 +1,4 @@
-import smtplib, os
+import smtplib, os, time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -6,7 +6,7 @@ PASSWORD = os.environ.get('GMAIL_TEST_PASS')
 source_email = 'brotatotestbot@gmail.com'
 target_email = 'theamazingfedex+muxt1pyywtdnqri7ncry@boards.trello.com'
 
-def send_email(message, subject="Bug Report"):
+def send_email(message, subject="Bug Report on "+time.ctime()):
   msg = MIMEMultipart()
   msg['From'] = source_email
   msg['To'] = target_email
