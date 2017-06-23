@@ -2,13 +2,17 @@
 
 from flask import Flask, request, redirect, url_for, send_from_directory, session
 from flask_cors import CORS, cross_origin
-from waitress import serve
+import waitress
+# from waitress import serve
+from logging.handlers import RotatingFileHandler
 import serverutils as utils
-import os, sys, time, stat, json, chess, chess.uci, settings, mailserver
+import os, sys, time, stat, json, chess, chess.uci, settings, mailserver, coloredlogs
 
 HOST_NAME = '0.0.0.0'
 PORT_NUMBER = os.environ.get('PORT') or 8080
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+LOG_LEVEL = utils.get_log_level(os.environ.get("LOG_LEVEL"))
+LOG_PATH = DIR_PATH + "/logs"
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -25,6 +29,13 @@ else:
   engine = chess.uci.popen_engine(DIR_PATH + "/stockfish_8_x64")
 
 engine.uci()
+
+@app.before_request
+def log_request():
+  remote_addr = request.environ['REMOTE_ADDR']
+  log_message = f"REQUEST from {remote_addr}:\n{request.headers}\n"
+  app.logger.debug(log_message)
+  print(f"Serving a response to {remote_addr}")
 
 @app.route('/')
 def root():
@@ -78,17 +89,16 @@ def new_game(fenstr=""):
 
 
 if __name__ == '__main__':
-    # wsgi_app = static.Cling('./JSChess')
-    print(time.asctime(), 'Server Starts - %s:%s' % (HOST_NAME, PORT_NUMBER))
-    # try:
-    serve(
-      app,
-      host=HOST_NAME,
-      port=PORT_NUMBER
-      # listen="*:"+str(PORT_NUMBER)
-    )
-        # httpd.serve_forever()
-    # except KeyboardInterrupt:
-    #     pass
-    # httpd.server_close()
-    # print(time.asctime(), 'Server Stops - %s:%s' % (HOST_NAME, PORT_NUMBER))
+  startup_time = time.asctime()
+  startup_time_string = startup_time.replace(' ', '_').replace(':', '-')
+  handler = RotatingFileHandler(f"{LOG_PATH}/{startup_time_string}.log", maxBytes=10000, backupCount=1)
+  handler.setLevel(LOG_LEVEL)
+  coloredlogs.install(level='DEBUG')
+  app.logger.addHandler(handler)
+
+  print(startup_time, 'Server Starts - %s:%s' % (HOST_NAME, PORT_NUMBER))
+  waitress.serve(
+    app,
+    host=HOST_NAME,
+    port=PORT_NUMBER
+  )
